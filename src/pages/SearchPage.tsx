@@ -2,24 +2,33 @@ import { useState } from 'react';
 import { Layout } from '@/components/Layout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
-import { mockUsers } from '@/services/mockData';
+import { Search, Loader2 } from 'lucide-react';
 import { User } from '@/types';
+import { userService } from '@/services/userService';
+import { useToast } from '@/hooks/use-toast';
 
 const SearchPage = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleSearch = (value: string) => {
+  const handleSearch = async (value: string) => {
     setQuery(value);
     if (value.trim()) {
-      const filtered = mockUsers.filter(
-        (user) =>
-          user.displayName.toLowerCase().includes(value.toLowerCase()) ||
-          user.username.toLowerCase().includes(value.toLowerCase()) ||
-          user.bio?.toLowerCase().includes(value.toLowerCase())
-      );
-      setResults(filtered);
+      setLoading(true);
+      try {
+        const users = await userService.searchUsers(value);
+        setResults(users);
+      } catch (error) {
+        toast({
+          title: 'Search failed',
+          description: 'Could not search users',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
     } else {
       setResults([]);
     }
@@ -40,13 +49,19 @@ const SearchPage = () => {
       </div>
 
       <div className="pb-20 md:pb-0">
-        {results.length === 0 && query && (
+        {loading && (
+          <div className="flex items-center justify-center p-8">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        )}
+        
+        {!loading && results.length === 0 && query && (
           <div className="p-8 text-center text-muted-foreground">
             No users found matching "{query}"
           </div>
         )}
         
-        {results.length === 0 && !query && (
+        {!loading && results.length === 0 && !query && (
           <div className="p-8 text-center text-muted-foreground">
             Search for users by name, username, or bio
           </div>

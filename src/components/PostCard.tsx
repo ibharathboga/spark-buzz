@@ -3,29 +3,49 @@ import { Post } from '@/types';
 import { Button } from './ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import { useState } from 'react';
+import { likeService } from '@/services/likeService';
+import { useToast } from '@/hooks/use-toast';
 
 interface PostCardProps {
   post: Post;
-  onLike?: (postId: string) => void;
-  onShare?: (postId: string) => void;
+  onUpdate?: () => void;
 }
 
-export const PostCard = ({ post, onLike, onShare }: PostCardProps) => {
+export const PostCard = ({ post, onUpdate }: PostCardProps) => {
   const [liked, setLiked] = useState(post.isLiked || false);
-  const [shared, setShared] = useState(post.isShared || false);
   const [likesCount, setLikesCount] = useState(post.likesCount);
   const [sharesCount, setSharesCount] = useState(post.sharesCount);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleLike = () => {
-    setLiked(!liked);
-    setLikesCount(liked ? likesCount - 1 : likesCount + 1);
-    onLike?.(post.id);
+  const handleLike = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      if (liked) {
+        await likeService.unlikePost(post.id);
+        setLiked(false);
+        setLikesCount(likesCount - 1);
+      } else {
+        await likeService.likePost(post.id);
+        setLiked(true);
+        setLikesCount(likesCount + 1);
+      }
+      onUpdate?.();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update like status',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleShare = () => {
-    setShared(!shared);
-    setSharesCount(shared ? sharesCount - 1 : sharesCount + 1);
-    onShare?.(post.id);
+    setSharesCount(sharesCount + 1);
   };
 
   const timeAgo = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
@@ -73,9 +93,7 @@ export const PostCard = ({ post, onLike, onShare }: PostCardProps) => {
               variant="ghost"
               size="sm"
               onClick={handleShare}
-              className={`text-muted-foreground hover:text-green-500 hover:bg-green-500/10 ${
-                shared ? 'text-green-500' : ''
-              }`}
+              className="text-muted-foreground hover:text-green-500 hover:bg-green-500/10"
             >
               <Share2 className="w-4 h-4 mr-1" />
               <span className="text-sm">{sharesCount}</span>

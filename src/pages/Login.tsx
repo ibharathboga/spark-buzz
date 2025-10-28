@@ -84,13 +84,6 @@ const Login = () => {
               </Link>
             </p>
           </div>
-
-          <div className="mt-6 p-4 bg-muted rounded-lg">
-            <p className="text-sm font-semibold mb-2">Test Users:</p>
-            <p className="text-xs text-muted-foreground">john@example.com</p>
-            <p className="text-xs text-muted-foreground">jane@example.com</p>
-            <p className="text-xs text-muted-foreground">mike@example.com</p>
-          </div>
         </CardContent>
       </Card>
     </div>
