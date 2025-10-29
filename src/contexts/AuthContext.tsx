@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '@/types';
-import { authService } from '@/services/authService';
+import { mockUsers } from '@/services/mockData';
 
 interface AuthContextType {
   user: User | null;
@@ -8,60 +8,52 @@ interface AuthContextType {
   register: (username: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
-  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored token and fetch user
-    const token = localStorage.getItem('token');
-    if (token) {
-      authService.getCurrentUser()
-        .then(setUser)
-        .catch(() => {
-          localStorage.removeItem('token');
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+    // Check for stored user
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
     }
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      const response = await authService.signIn({ email, password });
-      setUser(response.user);
+    // Mock login - find user by email
+    const foundUser = mockUsers.find(u => u.email === email);
+    if (foundUser) {
+      setUser(foundUser);
+      localStorage.setItem('currentUser', JSON.stringify(foundUser));
       return true;
-    } catch (error) {
-      console.error('Login failed:', error);
-      return false;
     }
+    return false;
   };
 
   const register = async (username: string, email: string, password: string): Promise<boolean> => {
-    try {
-      const response = await authService.signUp({ 
-        username, 
-        email, 
-        password,
-        displayName: username 
-      });
-      setUser(response.user);
-      return true;
-    } catch (error) {
-      console.error('Registration failed:', error);
-      return false;
-    }
+    // Mock registration
+    const newUser: User = {
+      id: String(mockUsers.length + 1),
+      username,
+      email,
+      displayName: username,
+      followersCount: 0,
+      followingCount: 0,
+      postsCount: 0,
+      createdAt: new Date().toISOString(),
+    };
+    setUser(newUser);
+    localStorage.setItem('currentUser', JSON.stringify(newUser));
+    return true;
   };
 
   const logout = () => {
-    authService.logout();
     setUser(null);
+    localStorage.removeItem('currentUser');
   };
 
   return (
@@ -71,9 +63,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       register,
       logout,
       isAuthenticated: !!user,
-      loading,
     }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };

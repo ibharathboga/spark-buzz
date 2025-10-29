@@ -2,52 +2,14 @@ import { useParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { PostCard } from '@/components/PostCard';
 import { Button } from '@/components/ui/button';
-import { Calendar, Loader2 } from 'lucide-react';
+import { Calendar } from 'lucide-react';
+import { mockUsers, mockPosts } from '@/services/mockData';
 import { format } from 'date-fns';
-import { useState, useEffect } from 'react';
-import { User, Post } from '@/types';
-import { userService } from '@/services/userService';
-import { feedService } from '@/services/feedService';
 
 const Profile = () => {
   const { userId } = useParams();
-  const [user, setUser] = useState<User | null>(null);
-  const [userPosts, setUserPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (userId) {
-      loadProfile();
-    }
-  }, [userId]);
-
-  const loadProfile = async () => {
-    if (!userId) return;
-    
-    setLoading(true);
-    try {
-      const [userData, posts] = await Promise.all([
-        userService.getUserById(userId),
-        feedService.getUserFeed(userId),
-      ]);
-      setUser(userData);
-      setUserPosts(posts);
-    } catch (error) {
-      console.error('Failed to load profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center p-8">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      </Layout>
-    );
-  }
+  const user = mockUsers.find((u) => u.id === userId);
+  const userPosts = mockPosts.filter((p) => p.authorId === userId);
 
   if (!user) {
     return (
@@ -113,7 +75,7 @@ const Profile = () => {
         {userPosts.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">No posts yet</div>
         ) : (
-          userPosts.map((post) => <PostCard key={post.id} post={post} onUpdate={loadProfile} />)
+          userPosts.map((post) => <PostCard key={post.id} post={post} />)
         )}
       </div>
     </Layout>

@@ -5,13 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { postService } from '@/services/postService';
 
 const MAX_CHARS = 280;
 
 const CreatePost = () => {
   const [content, setContent] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -20,25 +18,13 @@ const CreatePost = () => {
   const isOverLimit = content.length > MAX_CHARS;
   const isNearLimit = content.length >= 260;
 
-  const handlePost = async () => {
+  const handlePost = () => {
     if (content.trim() && !isOverLimit) {
-      setLoading(true);
-      try {
-        await postService.createPost({ content });
-        toast({
-          title: 'Post created!',
-          description: 'Your post has been published successfully.',
-        });
-        navigate('/');
-      } catch (error) {
-        toast({
-          title: 'Failed to create post',
-          description: 'Please try again.',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
+      toast({
+        title: 'Post created!',
+        description: 'Your post has been published successfully.',
+      });
+      navigate('/');
     }
   };
 
@@ -113,10 +99,10 @@ const CreatePost = () => {
 
           <Button
             onClick={handlePost}
-            disabled={!content.trim() || isOverLimit || loading}
+            disabled={!content.trim() || isOverLimit}
             className="rounded-full px-6"
           >
-            {loading ? 'Posting...' : 'Post'}
+            Post
           </Button>
         </div>
       </div>
